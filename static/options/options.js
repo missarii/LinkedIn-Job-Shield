@@ -24,6 +24,7 @@
     s.scoring = Object.assign({}, (DEFAULTS.scoring || {}), (stored.scoring || {}));
 
     $('enable').checked = !!s.enable;
+    $('hideOpenToWork').checked = !!s.hideOpenToWork;
     $('scoreThreshold').value = s.scoreThreshold;
     $('thresholdLabel').textContent = s.scoreThreshold;
     $('highlightRecommended').checked = !!s.highlightRecommended;
@@ -59,6 +60,7 @@
   function collect() {
     const s = {
       enable: $('enable').checked,
+      hideOpenToWork: $('hideOpenToWork').checked,
       scoreThreshold: parseInt($('scoreThreshold').value, 10),
       highlightRecommended: $('highlightRecommended').checked,
       blockedCompanies: splitLines($('blockedCompanies').value),

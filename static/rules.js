@@ -18,6 +18,9 @@ var JobShieldDefaults = {
   // Master switch for the whole extension.
   enable: true,
 
+  // Hide LinkedIn "Open to Work" / #OpenToWork job-seeker self-promotion posts.
+  hideOpenToWork: true,
+
   // ----- 1. Blocked companies -------------------------------
   // Any post whose company name contains one of these is hidden immediately.
   blockedCompanies: [

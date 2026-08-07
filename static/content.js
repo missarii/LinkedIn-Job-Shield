@@ -136,6 +136,11 @@
     const text = (info.text || '').toLowerCase();
     const full = (company + ' ' + text);
 
+    // 0) Hide "Open to Work" / job-seeker self-promotion posts.
+    if (s.hideOpenToWork && /open to work|#opentowork|open for work|opentowork/i.test(full)) {
+      return { action: 'hide', score: 999, reasons: ['"Open to Work" post'] };
+    }
+
     // 1) Blocked company -> immediate hide.
     for (const comp of s.blockedCompanies || []) {
       if (comp && company.includes(String(comp).toLowerCase())) {

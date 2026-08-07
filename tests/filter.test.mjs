@@ -87,6 +87,13 @@ const fake = makeCard({
   isFeed: false
 }); // high score -> hide
 const normal = makeCard({ company: 'Delta Corp', title: 'Accountant', location: 'London, UK' });      // show
+const opentowork = makeCard({
+  company: 'Dhruta Gabani',
+  title: 'Open to Work | Android Developer',
+  location: '',
+  text: 'Hi everyone! I’m currently looking for Android Developer opportunities. #OpenToWork',
+  isFeed: false
+}); // open-to-work -> hide
 
 // Wait for the debounced initial scan (content.js init runs async + 250ms debounce).
 await new Promise((r) => setTimeout(r, 900));
@@ -97,14 +104,17 @@ console.log('fake     display=%s hidden=%j', fake.style.display, cls(fake).inclu
 console.log('normal   display=%s hidden=%j', normal.style.display, cls(normal).includes('jobshield-hidden'));
 console.log('acme     display=%s recommended=%j', document.querySelectorAll('.job-card-container__primary-description')[0].closest('li').style.display, cls(document.querySelectorAll('li')[0]).includes('jobshield-recommended'));
 
+console.log('opentowork display=%s hidden=%j', opentowork.style.display, cls(opentowork).includes('jobshield-hidden'));
+
 // collect cards in DOM order
 const cards = Array.from(document.querySelectorAll('li.jobs-search-results__list-item'));
 const acme = cards[0];
 
 assert.equal(blocked.style.display, 'none', 'blocked company should be hidden');
 assert.equal(fake.style.display, 'none', 'fake post should be hidden by score');
+assert.equal(opentowork.style.display, 'none', 'open-to-work post should be hidden');
 assert.equal(normal.style.display, '', 'normal job should stay visible');
-assert.equal(document.querySelectorAll('.jobshield-hidden').length, 2, 'exactly two hidden');
+assert.equal(document.querySelectorAll('.jobshield-hidden').length, 3, 'exactly three hidden');
 assert.ok(acme.classList.contains('jobshield-recommended'), 'whitelisted React job should be recommended');
 assert.notEqual(acme.style.display, 'none', 'recommended job stays visible');
 
