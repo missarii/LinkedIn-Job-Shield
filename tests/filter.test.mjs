@@ -95,6 +95,9 @@ const opentowork = makeCard({
   isFeed: false
 }); // open-to-work -> hide
 const mismatch = makeCard({ company: 'Foo Ltd', title: 'Sales Manager', location: 'Chicago, US' }); // no whitelist term -> hidden (required)
+// Your two examples: on-site engineering jobs with NO "remote" — must be hidden.
+const layup = makeCard({ company: 'Layup Parts', title: 'Software Engineer, Controls & Automation', location: 'Huntington Beach, CA (On-site)' });
+const sok = makeCard({ company: 'SOK', title: 'Software Engineer, S-ID', location: 'Helsinki Metropolitan Area' });
 
 // Wait for the debounced initial scan (content.js init runs async + 250ms debounce).
 await new Promise((r) => setTimeout(r, 900));
@@ -107,6 +110,8 @@ console.log('acme     display=%s recommended=%j', document.querySelectorAll('.jo
 
 console.log('opentowork display=%s hidden=%j', opentowork.style.display, cls(opentowork).includes('jobshield-hidden'));
 console.log('mismatch  display=%s hidden=%j', mismatch.style.display, cls(mismatch).includes('jobshield-hidden'));
+console.log('layup(SWE, on-site) hidden=%j', cls(layup).includes('jobshield-hidden'));
+console.log('sok(SWE, on-site)   hidden=%j', cls(sok).includes('jobshield-hidden'));
 
 // collect cards in DOM order
 const cards = Array.from(document.querySelectorAll('li.jobs-search-results__list-item'));
@@ -116,8 +121,10 @@ assert.equal(blocked.style.display, 'none', 'blocked company should be hidden');
 assert.equal(fake.style.display, 'none', 'fake post should be hidden by score');
 assert.equal(opentowork.style.display, 'none', 'open-to-work post should be hidden');
 assert.equal(mismatch.style.display, 'none', 'non-matching (no whitelist term) post should be hidden in required mode');
+assert.equal(layup.style.display, 'none', 'on-site SWE job with no "remote" should be hidden');
+assert.equal(sok.style.display, 'none', 'on-site SWE job with no "remote" should be hidden');
 assert.equal(normal.style.display, '', 'normal job matching whitelist should stay visible');
-assert.equal(document.querySelectorAll('.jobshield-hidden').length, 4, 'exactly four hidden');
+assert.equal(document.querySelectorAll('.jobshield-hidden').length, 6, 'exactly six hidden');
 assert.ok(acme.classList.contains('jobshield-recommended'), 'whitelisted React job should be recommended');
 assert.notEqual(acme.style.display, 'none', 'recommended job stays visible');
 

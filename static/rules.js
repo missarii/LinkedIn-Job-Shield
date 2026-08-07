@@ -65,24 +65,18 @@ var JobShieldDefaults = {
   // ----- 3. Whitelist / required criteria ----------------------
   // When whitelistRequired is ON, a post MUST contain at least one of these
   // terms to be shown; everything else is hidden as "doesn't match criteria".
+  // NOTE: keep this list to ONLY what you truly require. The aim here is to
+  // require "remote", so the default list is remote-focused. Any generic role
+  // word (e.g. "software engineer", "developer") would let on-site jobs through.
   whitelistRequired: true,
   whitelistKeywords: [
-    'react',
-    'typescript',
-    'javascript',
-    'node',
-    'full stack',
-    'fullstack',
-    'frontend',
-    'backend',
     'remote',
-    'germany',
-    'norway',
-    'sweden',
-    'denmark',
-    'netherlands',
-    'software engineer',
-    'developer'
+    'remote-first',
+    'remote friendly',
+    'fully remote',
+    '100% remote',
+    'work from home',
+    'remote job'
   ],
 
   // ----- 4. Suspicion score threshold ------------------------
