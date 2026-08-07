@@ -272,7 +272,7 @@
 
     for (const kw of matchedKeywords) reasons.push('Matched keyword: "' + kw + '"');
 
-    // 4) Whitelist -> never hidden by score, flagged as recommended.
+    // 4) Whitelist -> relevance. Determine which whitelist terms matched.
     let whitelist = [];
     for (const kw of s.whitelistKeywords || []) {
       if (kw && full.includes(String(kw).toLowerCase())) whitelist.push(kw);
@@ -281,6 +281,17 @@
     if (score >= (s.scoreThreshold || 40)) {
       return { action: 'hide', score, reasons };
     }
+
+    // REQUIRED mode: a post MUST match at least one whitelist term to be shown.
+    // (Only enforced when the user has actually filled in whitelist terms.)
+    if (s.whitelistRequired && (s.whitelistKeywords || []).length > 0 && whitelist.length === 0) {
+      return {
+        action: 'hide',
+        score,
+        reasons: reasons.concat(["Doesn't match required criteria (whitelist)"])
+      };
+    }
+
     if (whitelist.length) {
       return { action: 'recommend', score, reasons, whitelist };
     }

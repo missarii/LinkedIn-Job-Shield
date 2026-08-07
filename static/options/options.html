@@ -35,8 +35,14 @@
     </section>
 
     <section>
-      <h2>Whitelist (preferred)</h2>
-      <p class="desc">Post matching any of these is marked ⭐ Recommended and never hidden by score.</p>
+      <h2>Whitelist (required criteria)</h2>
+      <label class="row switch-row">
+        <span>REQUIRED — post must contain one of these to be shown</span>
+        <input type="checkbox" id="whitelistRequired" />
+      </label>
+      <p class="desc">One term or phrase per line. With REQUIRED on, any job post not
+        containing at least one of these is hidden (as “doesn’t match criteria”).
+        With REQUIRED off, it only gets the ⭐ highlight.</p>
       <textarea id="whitelistKeywords" rows="6" placeholder="react&#10;remote&#10;germany"></textarea>
     </section>
 

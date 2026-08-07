@@ -31,6 +31,7 @@
 
     $('blockedCompanies').value = joinLines(s.blockedCompanies);
     $('blockedKeywords').value = joinLines(s.blockedKeywords);
+    $('whitelistRequired').checked = !!s.whitelistRequired;
     $('whitelistKeywords').value = joinLines(s.whitelistKeywords);
 
     SCORING_IDS.forEach((id) => { $('sc_' + id).value = s.scoring[id]; });
@@ -65,6 +66,7 @@
       highlightRecommended: $('highlightRecommended').checked,
       blockedCompanies: splitLines($('blockedCompanies').value),
       blockedKeywords: splitLines($('blockedKeywords').value),
+      whitelistRequired: $('whitelistRequired').checked,
       whitelistKeywords: splitLines($('whitelistKeywords').value),
       scoring: {},
       aiEnabled: $('aiEnabled').checked,

@@ -62,9 +62,10 @@ var JobShieldDefaults = {
     'work from home quickly'
   ],
 
-  // ----- 3. Whitelist / preferred keywords -------------------
-  // If one of these appears, the post is flagged as "Recommended" (⭐) and
-  // never hidden by the keyword score alone.
+  // ----- 3. Whitelist / required criteria ----------------------
+  // When whitelistRequired is ON, a post MUST contain at least one of these
+  // terms to be shown; everything else is hidden as "doesn't match criteria".
+  whitelistRequired: true,
   whitelistKeywords: [
     'react',
     'typescript',
