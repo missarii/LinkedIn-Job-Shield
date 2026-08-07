@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LinkedIn Job Shield</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="logo">🛡</span>
+      <div>
+        <h1>LinkedIn Job Shield</h1>
+        <p class="sub">Filters fake, promotional &amp; irrelevant job posts</p>
+      </div>
+    </header>
+
+    <label class="switch-row">
+      <span>Extension enabled</span>
+      <input type="checkbox" id="enabled" />
+    </label>
+
+    <div class="stats">
+      <div class="stat"><b id="statHidden">–</b><span>hidden</span></div>
+      <div class="stat"><b id="statShown">–</b><span>shown</span></div>
+      <div class="stat"><b id="statRec">–</b><span>⭐ recommended</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="btnScan" class="primary">Re-scan page</button>
+      <button id="btnOptions">⚙ Settings</button>
+    </div>
+
+    <p class="hint" id="hint">Open a LinkedIn Jobs / feed page to see filtering in action.</p>
+    <p class="hint" id="aiStatus" style="display:none"></p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

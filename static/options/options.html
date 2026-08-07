@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LinkedIn Job Shield — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <h1>🛡 LinkedIn Job Shield — Settings</h1>
+    <p class="lede">Configure how the extension filters job posts on LinkedIn.
+      Changes save automatically to your browser and apply to open LinkedIn tabs.</p>
+
+    <section>
+      <h2>General</h2>
+      <label class="row switch-row"><span>Enable filtering</span><input type="checkbox" id="enable" /></label>
+      <label class="row">
+        <span>Hide when suspicion score ≥ <b id="thresholdLabel">40</b></span>
+        <input type="range" id="scoreThreshold" min="0" max="100" step="5" />
+      </label>
+      <label class="row switch-row"><span>⭐ Highlight recommended posts</span><input type="checkbox" id="highlightRecommended" /></label>
+    </section>
+
+    <section>
+      <h2>Blocked companies</h2>
+      <p class="desc">One company name per line. Job posts from these are hidden immediately.</p>
+      <textarea id="blockedCompanies" rows="5" placeholder="ABC Staffing&#10;XYZ Recruitment"></textarea>
+    </section>
+
+    <section>
+      <h2>Blocked keywords / patterns</h2>
+      <p class="desc">One phrase per line. Any match adds to the suspicion score.</p>
+      <textarea id="blockedKeywords" rows="8" placeholder="comment interested&#10;urgent hiring"></textarea>
+    </section>
+
+    <section>
+      <h2>Whitelist (preferred)</h2>
+      <p class="desc">Post matching any of these is marked ⭐ Recommended and never hidden by score.</p>
+      <textarea id="whitelistKeywords" rows="6" placeholder="react&#10;remote&#10;germany"></textarea>
+    </section>
+
+    <section id="scoring">
+      <h2>Suspicion scoring weights</h2>
+      <p class="desc">Points added when the corresponding signal is detected.</p>
+      <div class="grid">
+        <label>No real description <input type="number" id="sc_noDescription" min="0" max="100" /></label>
+        <label>Asks to follow page <input type="number" id="sc_asksFollow" min="0" max="100" /></label>
+        <label>Comment “Interested” <input type="number" id="sc_commentInterested" min="0" max="100" /></label>
+        <label>No location <input type="number" id="sc_noLocation" min="0" max="100" /></label>
+        <label>Recruitment agency <input type="number" id="sc_recruitmentAgency" min="0" max="100" /></label>
+        <label>Asks to DM/PM <input type="number" id="sc_dmMe" min="0" max="100" /></label>
+        <label>Mass/urgent hiring <input type="number" id="sc_massHiring" min="0" max="100" /></label>
+        <label>“Guaranteed/no-experience” <input type="number" id="sc_noExperienceGuarantee" min="0" max="100" /></label>
+        <label>Per matched keyword <input type="number" id="sc_perKeyword" min="0" max="100" /></label>
+      </div>
+    </section>
+
+    <section id="ai">
+      <h2>🤖 On-device AI classifier</h2>
+      <p class="desc">Runs a free Hugging Face zero-shot model locally in your browser
+        (Transformers.js). No API key, nothing leaves your machine. Model weights +
+        runtime (~100–500&nbsp;MB) download on first use and are cached.</p>
+      <label class="row switch-row"><span>Enable AI filtering</span><input type="checkbox" id="aiEnabled" /></label>
+      <label class="row">
+        <span>Model</span>
+        <select id="aiModel"></select>
+      </label>
+      <label class="row">
+        <span>AI hide threshold: <b id="aiConfidenceLabel">0.60</b></span>
+        <input type="range" id="aiConfidence" min="0.5" max="0.99" step="0.01" />
+      </label>
+      <label class="row switch-row"><span>Also hide recruitment-agency ads</span><input type="checkbox" id="aiBlockAgencies" /></label>
+    </section>
+
+    <div class="footer">
+      <button id="save">Save settings</button>
+      <button id="reset" class="ghost">Reset to defaults</button>
+      <span id="status"></span>
+    </div>
+  </main>
+
+  <script src="../rules.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

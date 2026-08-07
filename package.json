@@ -1,0 +1,29 @@
+{
+  "name": "linkedin-job-search-filter-extension",
+  "version": "1.0.0",
+  "description": "Firefox extension that hides fake, promotional and irrelevant LinkedIn job posts using keyword rules plus an on-device AI classifier (Transformers.js / free Hugging Face model).",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:icon": "python3 scripts/make_icons.py",
+    "test": "node tests/filter.test.mjs",
+    "dev": "node scripts/build.mjs && echo 'dist rebuilt; reload the add-on in about:debugging'"
+  },
+  "keywords": [
+    "firefox-extension",
+    "linkedin",
+    "job-search",
+    "transformers.js",
+    "zero-shot-classification"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "jsdom": "^24.0.0"
+  }
+}
