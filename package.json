@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:icon": "python3 scripts/make_icons.py",
-    "test": "node tests/filter.test.mjs",
+    "test": "node tests/filter.test.mjs && node tests/generic-detect.test.mjs",
     "dev": "node scripts/build.mjs && echo 'dist rebuilt; reload the add-on in about:debugging'"
   },
   "keywords": [

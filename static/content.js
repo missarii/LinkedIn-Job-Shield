@@ -49,7 +49,8 @@
   let settings = cloneSettings(window.JobShieldDefaults || {});
   const state = {
     showHidden: false, // when true, hidden cards are shown with a reason chip
-    aiDone: new WeakSet() // cards already sent to the AI worker
+    aiDone: new WeakSet(), // cards already sent to the AI worker
+    allCards: [] // cards detected on the last scan
   };
 
   // ------------------------------------------------------------------
@@ -59,19 +60,90 @@
     'li.jobs-search-results__list-item',
     'li[data-occludable-job-id]',
     '.job-card-container',
+    '.job-card-list',
+    '.job-card-list__entity',
     '.scaffold-layout__list-container > li',
+    '.scaffold-layout__list-container > div',
     '.jobs-search__results-list > li',
+    '.jobs-search-results__list > li',
+    '[data-test-jobs-search-results-list] > li',
+    '[data-test-jobs-search-results-list] .job-card-container',
+    'article.feed-shared-update-v2',
     '.feed-shared-update-v2',
-    '.entity-result'
+    '.feed-shared-mini-update-v2',
+    '.entity-result',
+    '.job-card-square__list',
+    'li[data-recirculation-id]',
+    'section[data-view-name="job-search-result"]'
   ];
 
+  // Cheap check: does this element look like a job / feed card?
+  function looksLikeCard(el) {
+    const raw = el.className;
+    const cls = String(raw && raw.baseVal !== undefined ? raw.baseVal : raw || '');
+    const tag = (el.tagName || '').toLowerCase();
+    if (tag === 'html' || tag === 'body' || tag === 'ul' || tag === 'ol' ||
+        tag === 'main' || tag === 'nav' || tag === 'header' || tag === 'form' ||
+        tag === 'script' || tag === 'style') {
+      return false;
+    }
+    const c = ' ' + cls.toLowerCase() + ' ';
+    if (/\b(job-card|job-card-container|feed-shared-update|entity-result|search-result|result-card|update-v2|job-listing)\b/.test(c)) {
+      return true;
+    }
+    // A real clickable link to a job posting / company / feed update is strong evidence.
+    if (el.querySelector('a[href*="/jobs/view"], a[href*="/jobs/applylex/"], a[data-control-name="job_card"], a[href*="jobPosting"]')) {
+      return true;
+    }
+    if (el.querySelector('a[href*="/feed/update/"], a[data-control-name="feed_main"]')) {
+      return true;
+    }
+    // Structural heuristic: counts signals inside the element.
+    let signals = 0;
+    if (el.querySelector('a[href*="/company/"]')) signals++;
+    if (el.querySelector('a[href*="/jobs"]')) signals++;
+    if (el.querySelector('time')) signals++;
+    const text = norm(el.textContent || '');
+    if (/open to work|#opentowork|hiring|we are hiring|looking for/i.test(text)) signals++;
+    if (/developer|engineer|intern|remote|salary|apply|location|experience/i.test(text)) signals++;
+    return signals >= 2;
+  }
+
+  // Keep only outermost matching elements (drop ones nested inside another match).
+  function dedupNested(list) {
+    const arr = Array.from(list);
+    const out = [];
+    for (const el of arr) {
+      let nested = false;
+      for (const other of arr) {
+        if (other !== el && other.contains(el)) { nested = true; break; }
+      }
+      if (!nested) out.push(el);
+    }
+    return out;
+  }
+
   function getCards() {
-    const found = new Set();
-    $$(CARD_SELECTORS.join(',')).forEach((el) => found.add(el));
-    // Also grab anything inside the dedicated results list container.
-    const list = $('[data-test-jobs-search-results-list]');
-    if (list) $$('li, .job-card-container', list).forEach((el) => found.add(el));
-    return Array.from(found);
+    // Strategy 1: specific known selectors.
+    const specific = dedupNested($$(CARD_SELECTORS.join(',')));
+
+    // Strategy 2: structural fallback used when the specific pass finds nothing
+    // (LinkedIn frequently renames its classes).
+    if (specific.length === 0) {
+      const candidates = dedupNested(
+        $$('li, article, div, section').filter((el) => looksLikeCard(el))
+      );
+      return candidates;
+    }
+
+    // If specific found something, also keep extra candidates that clearly look
+    // like cards but weren't matched (covers layouts we haven't seen).
+    const extra = dedupNested(
+      $$('li[data-occludable-job-id], article.feed-shared-update-v2, [class*="job-card"], [class*="feed-shared-update"], [class*="entity-result"]')
+    );
+    const merged = new Set(specific);
+    extra.forEach((el) => merged.add(el));
+    return dedupNested(merged);
   }
 
   function qText(el, selectors) {
@@ -331,6 +403,7 @@
   function scanNow() {
     if (!settings.enable) return;
     const cards = getCards();
+    state.allCards = cards;
     for (const el of cards) {
       if (el.__jobShieldProcessed) continue;
       el.__jobShieldProcessed = true;
@@ -351,16 +424,108 @@
   function updateHud() {
     const hidden = $$('.jobshield-hidden').length;
     const recommended = $$('.jobshield-recommended').length;
-    const shown = $$(CARD_SELECTORS.join(',')).filter(
-      (el) => !el.classList.contains('jobshield-hidden')
-    ).length;
+    const detected = state.allCards.length;
+    // "shown" = detected cards that are not hidden.
+    let shown = 0;
+    for (const el of state.allCards) {
+      if (!el.classList.contains('jobshield-hidden')) shown++;
+    }
     const hud = $('#jobshield-hud');
     if (hud) {
+      const dt = hud.querySelector('.js-hud-detected');
+      if (dt) {
+        dt.textContent = 'Detected ' + detected + ' card(s) on this page';
+        dt.style.color = detected === 0 ? '#ffd9a0' : '#fff';
+      }
       const st = hud.querySelector('.js-hud-stats');
       if (st) st.textContent = 'Hidden ' + hidden + ' · Shown ' + shown + ' · ⭐ ' + recommended;
       const eye = hud.querySelector('.js-hud-eye');
       if (eye) eye.textContent = state.showHidden ? 'Hide hidden' : 'Peek hidden';
+      const tip = hud.querySelector('.js-hud-tip');
+      if (tip) {
+        tip.textContent = detected === 0
+          ? 'No cards found on this page. If you are on LinkedIn, click Inspect.'
+          : '';
+        tip.style.display = detected === 0 ? '' : 'none';
+      }
     }
+  }
+
+  // Debug / inspect tool: outlines detected cards and prints their structure so
+  // a layout change can be diagnosed.
+  function runDebug() {
+    const cards = getCards();
+    state.allCards = cards;
+    const details = [];
+    const shown = [];
+    for (const el of cards.slice(0, 5)) {
+      el.style.outline = '3px dashed #0a66c2';
+      el.style.outlineOffset = '2px';
+      shown.push(el);
+      const info = extractCardInfo(el);
+      let html = '';
+      try {
+        html = String(el.outerHTML || '').slice(0, 600);
+      } catch (e) { html = ''; }
+      details.push({
+        tag: el.tagName,
+        cls: String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className || ''),
+        title: info.title,
+        company: info.company,
+        location: info.location,
+        textLen: (info.text || '').length,
+        html
+      });
+    }
+    try {
+      console.log('[JobShield] detected cards:', cards.length, details);
+    } catch (e) { /* ignore */ }
+    if (cards.length === 0) {
+      showDebugModal(
+        'Nothing detected',
+        'No job cards were found on this page. This usually means you are not on a ' +
+        'LinkedIn job-search or feed page, or LinkedIn changed its markup. Open the page ' +
+        'below, press Inspect again, and check the browser console (F12 → Console) for ' +
+        '[JobShield] output.',
+        undefined
+      );
+      return;
+    }
+    if (shown.length) {
+      try { shown[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+    }
+    showDebugModal(
+      'Detected ' + cards.length + ' card(s)',
+      'First ' + shown.length + ' are outlined in blue. Their details (title, company, ' +
+      'location, class names) were logged to the console (F12 → Console) as "[JobShield] detected cards". ' +
+      'You can paste that output in a support message to retune the detector.',
+      details.map((d) =>
+        (d.cls ? 'class="' + d.cls + '" ' : '') +
+        (d.title ? 'title="' + d.title + '" ' : '') +
+        (d.company ? 'company="' + d.company + '"' : '') +
+        '(text ' + d.textLen + ' chars)'
+      )
+    );
+  }
+
+  function showDebugModal(heading, message, lines) {
+    const old = $('#jobshield-modal');
+    if (old) old.remove();
+    const m = document.createElement('div');
+    m.id = 'jobshield-modal';
+    m.innerHTML =
+      '<div class="js-modal-box">' +
+      '<div class="js-modal-title"><b>' + head(heading) + '</b></div>' +
+      '<div class="js-modal-body">' + message + '</div>' +
+      (lines && lines.length ? '<ul>' + lines.map((l) => '<li>' + head(l) + '</li>').join('') + '</ul>' : '') +
+      '<button class="js-modal-close">Close</button>' +
+      '</div>';
+    m.querySelector('.js-modal-close').addEventListener('click', () => m.remove());
+    document.body.appendChild(m);
+  }
+
+  function head(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   // ------------------------------------------------------------------
@@ -372,19 +537,24 @@
     hud.id = 'jobshield-hud';
     hud.innerHTML =
       '<div class="js-hud-title">🛡 Job Shield</div>' +
+      '<div class="js-hud-detected">…</div>' +
       '<div class="js-hud-stats">…</div>' +
       '<div class="js-hud-actions">' +
       '<button class="js-hud-eye">Peek hidden</button>' +
       '<button class="js-hud-scan">Rescan</button>' +
+      '<button class="js-hud-debug">🔍 Inspect</button>' +
       '<a class="js-hud-open" href="#">Settings</a>' +
-      '</div>';
+      '</div>' +
+      '<div class="js-hud-tip"></div>';
     hud.querySelector('.js-hud-eye').addEventListener('click', toggleShowHidden);
     hud.querySelector('.js-hud-scan').addEventListener('click', () => {
-      $$('.jobshield-hidden, .jobshield-recommended, .jobshield-ai').forEach(clearCardUI);
-      $$(CARD_SELECTORS.join(',')).forEach((el) => { delete el.__jobShieldProcessed; });
+      state.allCards.forEach((el) => {
+        if (el && el.isConnected) { clearCardUI(el); delete el.__jobShieldProcessed; }
+      });
       state.aiDone = new WeakSet();
       scanNow();
     });
+    hud.querySelector('.js-hud-debug').addEventListener('click', runDebug);
     hud.querySelector('.js-hud-open').addEventListener('click', (e) => {
       e.preventDefault();
       browser.runtime.sendMessage({ type: 'open-options' }).catch(() => {});
@@ -435,7 +605,18 @@
       '.jobshield-chip.hidden{background:#ffe4e6;color:#b91c1c;border:1px solid #f1aeb5}' +
       '.jobshield-recommended{box-shadow:0 0 0 2px #0a66c2, 0 0 12px rgba(10,102,194,.35) !important;border-radius:8px}' +
       '.jobshield-recommend-badge{position:absolute;top:8px;left:8px;z-index:3;background:#0a66c2;color:#fff;' +
-      'font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.2)}';
+      'font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.2)}' +
+      '#jobshield-hud .js-hud-detected{font-size:12px;opacity:.95;margin-bottom:2px}' +
+      '#jobshield-hud .js-hud-tip{font-size:11.5px;color:#ffd9a0;margin-top:8px;line-height:1.35}' +
+      '#jobshield-modal{position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.5);' +
+      'display:flex;align-items:center;justify-content:center;padding:20px}' +
+      '#jobshield-modal .js-modal-box{background:#fff;color:#1f2a37;border-radius:12px;max-width:520px;' +
+      'max-height:80vh;overflow:auto;padding:18px 20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}' +
+      '#jobshield-modal .js-modal-title{font-size:15px;margin-bottom:8px}' +
+      '#jobshield-modal .js-modal-body{font-size:13px;line-height:1.5;margin-bottom:10px}' +
+      '#jobshield-modal ul{margin:8px 0 12px;padding-left:18px}' +
+      '#jobshield-modal li{font-size:12px;margin:4px 0;word-break:break-word}' +
+      '#jobshield-modal button{background:#0a66c2;border:none;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer}';
     (document.head || document.documentElement).appendChild(style);
   }
 
