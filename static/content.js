@@ -72,6 +72,12 @@
     '.feed-shared-update-v2',
     '.feed-shared-mini-update-v2',
     '.entity-result',
+    '.search-entity-result',
+    '.reusable-search__result-container',
+    'li[data-results-list-builder-result-card]',
+    '.search-result__occluded-item',
+    'div[data-entity-result]',
+    'li[data-entity-result]',
     '.job-card-square__list',
     'li[data-recirculation-id]',
     'section[data-view-name="job-search-result"]'
